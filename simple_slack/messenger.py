@@ -1,20 +1,26 @@
 import typing
 import os
 import logging
+import requests
 
 from slack.web.client import WebClient
 
 from simple_slack import exception
 from simple_slack.message_objects import Message
+from simple_slack.utils import list_to_csv
 
 logger = logging.getLogger(__name__)
 
 
 class SlackMessenger:
+    client: typing.Optional[WebClient]
+    default_webhook: typing.Optional[str]
+
     def __init__(
         self,
         token: typing.Optional[str] = None,
         default_webhook: typing.Optional[str] = None,
+        recipient_hook: typing.Optional[typing.Callable[[...], str]] = None,
         **kwargs,
     ):
         mt = token or os.getenv("SLACK_TOKEN")
@@ -27,6 +33,12 @@ class SlackMessenger:
             )
 
         dw = default_webhook or os.getenv("SLACK_DEFAULT_WEBHOOK_URL")
+
+        if recipient_hook is None:
+            # Passthrough callable
+            self.recipient_hook = lambda x: x
+        else:
+            self.recipient_hook = recipient_hook
 
         if dw is not None:
             self.default_webhook = dw
@@ -44,24 +56,56 @@ class SlackMessenger:
         message: typing.Union[Message, str],
         recipient: typing.Optional[str] = None,
         webhook: typing.Optional[str] = None,
-    ):
+    ) -> dict:
+
+        recipient = self.recipient_hook(recipient)
+
         if self.client is not None:
-            self.client.chat_postMessage(
+            r = self.client.chat_postMessage(
                 channel=recipient,
                 text=message.text,
-                blocks=message.blocks,
-                attachments=message.attachments,
+                blocks=[i.render() for i in message.blocks],
             )
-        ...
+        else:
+            r = requests.post(
+                webhook or self.default_webhook, json=message.render()
+            ).json()
 
-    def send_file(self, recipient):
+        return r
+
+    def send_file(
+        self,
+        file: typing.Union[bytes, str],
+        recipient: typing.Union[str, typing.List[str]],
+        thread_ts: float = None,
+        title: str = None,
+    ):
+        """
+        https://api.slack.com/methods/files.upload
+        """
+        recipient = self.recipient_hook(recipient)
+        if type(recipient) == list:
+            recipient = list_to_csv(recipient)
+
+        if type(file) == str:
+            file = open(file, "r").read()
+
         if self.client is None:
             raise exception.SlackMessengerException(
                 f"Only Slack Messenger clients with tokens enabled can send files!"
             )
+        else:
+            return self.client.files_upload(
+                channel=recipient, title=title, thread_ts=thread_ts, content=file
+            )
 
-    def send_dialog(self, message_ts):
+    # TODO: implement dialogs
+    def send_dialog(self, dialog, trigger_id: float):
         if self.client is None:
             raise exception.SlackMessengerException(
                 f"Only Slack Messenger clients with tokens enabled can send dialogs"
+            )
+        else:
+            return self.client.dialog_open(
+                dialog=dialog.render(), trigger_id=trigger_id
             )

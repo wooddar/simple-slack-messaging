@@ -1,13 +1,21 @@
 import typing
+from pprint import pformat
+from simple_slack.blocks import block_accessories
+from simple_slack.blocks import block_objects
+from simple_slack.utils import RenderedSlackElement
 
 
-class Block:
+class Block(RenderedSlackElement):
     _block_type: str
 
     def __init__(self, block_id: str = ""):
         if self._block_type is None:
             raise NotImplemented("All new block instances must have a _block_type")
-        self._block = {"type": self._block_type, "block_id": block_id}
+        self._block: typing.Dict = {"type": self._block_type, "block_id": block_id}
+        super(Block, self).__init__(self._block)
+
+    def __repr__(self) -> str:
+        return pformat(self._block)
 
     def _set_block_attribute(self, attr, value):
         self._block.update({attr, value})
@@ -17,27 +25,18 @@ class Block:
         self._block.update(d)
         return self
 
-    # TODO: implement accessories
-    def set_block_accessory(self, accessory):
-        ...
+    def set_block_accessory(self, accessory: block_accessories.BlockAccessory):
+        self._block["accessory"] = accessory
 
 
 class SectionBlock(Block):
     _block_type = "section"
 
-    def __init__(self, text: str, block_id: str = ""):
+    def __init__(self, text: typing.Union[str, block_objects.Text], block_id: str = ""):
         super(SectionBlock, self).__init__(block_id=block_id)
-        self._update_block({"text": {"type": "mrkdwn", "text": text}})
-
-    @property
-    def text(self):
-        return self.text["text"]
-
-    def set_text(self, text: str):
-        if len(text) >= 3000:
-            raise ValueError("Slack text cannot be greater than 3000 chars")
-        self._set_block_attribute("text", text)
-        return self
+        if type(text) == str:
+            text = block_objects.Text(text=text)
+        self._update_block({"text": text})
 
 
 class ActionBlock(Block):
@@ -48,8 +47,7 @@ class ActionBlock(Block):
         self._update_block({"elements": []})
         self._elements: list = self._block["elements"]
 
-    # TODO: element implementation and assertion
-    def set_element(self, element):
+    def set_element(self, element: block_objects.BlockObject):
         self._elements.append(element)
         return self
 
@@ -74,16 +72,17 @@ class ImageBlock(Block):
             raise ValueError("Slack image block alt text cannot be > 2000 chars")
         self._set_block_attribute("alt_text", alt_text)
         self._set_block_attribute("image_url", image_url)
-        # TODO: implement text elements here
-        self._set_block_attribute("title", {"type": "mrkdwn", "text": title})
+        self._set_block_attribute("title", {"type": "plain_text", "text": title})
 
 
 class ContextBlock(Block):
-    # TODO: implement objects
     _block_type = "context"
 
-    def __init__(self, block_id: str = "", elements: typing.List = []):
+    def __init__(
+        self, elements: typing.List[block_objects.BlockObject], block_id: str = ""
+    ):
         super(ContextBlock, self).__init__(block_id=block_id)
+        self._update_block({"elements": elements})
 
 
 class FileBlock(Block):
