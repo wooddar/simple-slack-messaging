@@ -100,7 +100,7 @@ class SlackMessenger:
             )
 
     # TODO: implement dialogs
-    def send_dialog(self, dialog, trigger_id: float):
+    def send_dialog(self, dialog, trigger_id: str):
         if self.client is None:
             raise exception.SlackMessengerException(
                 f"Only Slack Messenger clients with tokens enabled can send dialogs"
