@@ -5,6 +5,7 @@ from setuptools.command.install import install
 
 VERSION = "0.1.0"
 
+
 class VerifyVersionCommand(install):
     """
     Custom command to verify that the git tag matches our version
@@ -12,16 +13,18 @@ class VerifyVersionCommand(install):
     Copied with shame from the circleCI documentation
 
     """
-    description = 'verify that the git tag matches our version'
+
+    description = "verify that the git tag matches our version"
 
     def run(self):
-        tag = os.getenv('CIRCLE_TAG')
+        tag = os.getenv("CIRCLE_TAG")
 
         if tag != VERSION:
             info = "Git tag: {0} does not match the version of this app: {1}".format(
                 tag, VERSION
             )
             sys.exit(info)
+
 
 setup(
     name="simple-slack-messaging",
@@ -34,8 +37,6 @@ setup(
     description="A Package for flexibly creating and sending Slack messages",
     python_requires=">=3.5",
     install_requires=["slackclient==2.1.0"],
-    keywords='slack messages block kit api',
-    cmdclass={
-        'verify': VerifyVersionCommand,
-    }
+    keywords="slack messages block kit api",
+    cmdclass={"verify": VerifyVersionCommand},
 )

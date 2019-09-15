@@ -20,7 +20,7 @@ class SlackMessenger:
         self,
         token: typing.Optional[str] = None,
         default_webhook: typing.Optional[str] = None,
-        recipient_hook: typing.Optional[typing.Callable[[...], str]] = None,
+        recipient_hook: typing.Optional[typing.Callable[[typing.Any], str]] = None,
         **kwargs,
     ):
         mt = token or os.getenv("SLACK_TOKEN")
@@ -56,6 +56,7 @@ class SlackMessenger:
         message: typing.Union[Message, str],
         recipient: typing.Optional[str] = None,
         webhook: typing.Optional[str] = None,
+        thread_ts: str = None,
     ) -> dict:
 
         recipient = self.recipient_hook(recipient)
@@ -65,11 +66,15 @@ class SlackMessenger:
                 channel=recipient,
                 text=message.text,
                 blocks=[i.render() for i in message.blocks],
+                as_user=message.as_user,
+                icon_emoji=message.icon_emoji,
+                icon_url=message.icon_url,
+                mrkdwn=message.mrkdwn,
+                thread_ts=thread_ts,
+                username=message.username,
             )
         else:
-            r = requests.post(
-                webhook or self.default_webhook, json=message.render()
-            ).json()
+            r = requests.post(webhook or self.default_webhook, json=message.render())
 
         return r
 

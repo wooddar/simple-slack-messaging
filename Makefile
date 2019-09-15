@@ -9,7 +9,4 @@ package:
 	python setup.py bdist_wheel
 	black ./simple_slack --check
 	mypy ./simple_slack
-	pytest ./simple_slack
-	codecov
-
-
+	pytest ./tests --cov=./

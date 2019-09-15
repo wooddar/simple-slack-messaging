@@ -3,14 +3,19 @@ from functools import reduce
 
 
 class RenderedSlackElement:
+    _can_render = True
+
     def __init__(self, mappable: typing.Dict):
         self._mappable_obj = mappable
 
     def render(self):
         m_copy = {}
         for k, o in self._mappable_obj.items():
-            if issubclass(type(o), self.__class__):
+            if hasattr(o, "_can_render"):
                 m_copy[k] = o.render()
+            # Sub element is an iterable and may contain things that should be rendered
+            elif type(o) == list:
+                m_copy[k] = [i.render() if hasattr(i, "_can_render") else i for i in o]
             else:
                 m_copy[k] = o
         return m_copy

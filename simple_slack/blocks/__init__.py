@@ -1,3 +1,6 @@
+"""
+https://api.slack.com/reference/messaging/blocks
+"""
 import typing
 from pprint import pformat
 from simple_slack.blocks import block_accessories
@@ -18,7 +21,7 @@ class Block(RenderedSlackElement):
         return pformat(self._block)
 
     def _set_block_attribute(self, attr, value):
-        self._block.update({attr, value})
+        self._block.update({attr: value})
         return self
 
     def _update_block(self, d: dict):
@@ -38,6 +41,15 @@ class SectionBlock(Block):
             text = block_objects.Text(text=text)
         self._update_block({"text": text})
 
+    def add_field(self, field: block_objects.Text):
+        if "fields" not in self._block:
+            self._set_block_attribute("fields", [])
+        self._block["fields"].append(field)
+        return self
+
+    def fields(self):
+        return self._block.get("fields")
+
 
 class ActionBlock(Block):
     _block_type = "actions"
@@ -47,7 +59,7 @@ class ActionBlock(Block):
         self._update_block({"elements": []})
         self._elements: list = self._block["elements"]
 
-    def set_element(self, element: block_objects.BlockObject):
+    def add_element(self, element: block_objects.BlockObject):
         self._elements.append(element)
         return self
 

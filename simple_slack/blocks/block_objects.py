@@ -27,13 +27,9 @@ class Text(BlockObject):
     https://api.slack.com/reference/messaging/composition-objects#text
     """
 
-    def __init__(
-        self, text, text_type="mrkdwn", verbatim: bool = False, emoji: bool = False
-    ):
+    def __init__(self, text, text_type="mrkdwn", verbatim: bool = False):
         super(Text, self).__init__()
-        self._update_object(
-            {"type": text_type, "text": text, "verbatim": verbatim, "emoji": emoji}
-        )
+        self._update_object({"type": text_type, "text": text, "verbatim": verbatim})
 
 
 class ConfirmationDialog(BlockObject):
