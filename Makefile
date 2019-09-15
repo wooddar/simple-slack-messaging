@@ -10,4 +10,6 @@ package:
 	black ./simple_slack --check
 	mypy ./simple_slack
 	pytest ./simple_slack
+	codecov
+
 
