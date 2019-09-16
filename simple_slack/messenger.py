@@ -3,7 +3,9 @@ import os
 import logging
 import requests
 
+from pprint import pformat
 from slack.web.client import WebClient
+from slack.web.client import SlackResponse
 
 from simple_slack import exception
 from simple_slack.message_objects import Message
@@ -57,7 +59,17 @@ class SlackMessenger:
         recipient: typing.Optional[str] = None,
         webhook: typing.Optional[str] = None,
         thread_ts: str = None,
-    ) -> dict:
+    ) -> typing.Union[requests.Response, SlackResponse]:
+
+        if not hasattr(message, "_can_render") and type(message) != str:
+            raise ValueError(
+                f"Only Valid Message objects may be sent\nGot type {type(message)}"
+            )
+
+        if type(message) == str:
+            m = Message()
+            m.text = message
+            message = m
 
         recipient = self.recipient_hook(recipient)
 
@@ -73,6 +85,10 @@ class SlackMessenger:
                 thread_ts=thread_ts,
                 username=message.username,
             )
+            if not r.data["ok"]:
+                raise exception.SlackBotMessageNotSent(
+                    f"Slack message not sent {pformat(r.data)}"
+                )
         else:
             r = requests.post(webhook or self.default_webhook, json=message.render())
 

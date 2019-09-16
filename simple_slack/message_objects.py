@@ -53,7 +53,7 @@ class Message(RenderedSlackElement):
 
     @property
     def text(self) -> str:
-        return self.content["text"]
+        return self.content.get("text")
 
     @text.setter
     def text(self, text):
