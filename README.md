@@ -1,3 +1,5 @@
+This library was unfortunately made redundant before it left the gate by the great work from the guys over at the official Slack Python SDK  🤷‍♂️
+
 # simple-slack-messaging
 [![CircleCI](https://circleci.com/gh/wooddar/simple-slack-messaging/tree/master.svg?style=svg)](https://circleci.com/gh/wooddar/simple-slack-messaging/tree/master)
 
